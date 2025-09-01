@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function LogIn() {
   const [userdata, setUserData] = useState({
@@ -71,6 +72,11 @@ export default function LogIn() {
         >
           Log In
         </button>
+        <div>
+          <Link to="/signup" className="text-blue-500 hover:underline mt-4">
+            Don't have an account? Sign Up
+          </Link>
+        </div>
       </div>
     </div>
   );
