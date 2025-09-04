@@ -10,6 +10,7 @@ export default function LogIn() {
   // handle change
   const handleOnchange = (e) => {
     const { name, value } = e.target;
+    console.log("onchange event:", name, value);
     setUserData((prev) => ({
       ...prev,
       [name]: value,
@@ -18,20 +19,29 @@ export default function LogIn() {
 
   // handle login
   const handleLogIn = async () => {
-    const url = "http://localhost:8000";
+    const url = "http://localhost:8000/login";
     try {
       const response = await fetch(url, {
         method: "POST",
-        body: {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           username: userdata.username,
           password: userdata.password,
-        },
+        }),
       });
+
       if (!response.ok) {
-        throw new Error(`Response status:${response.status}`);
+        const data = await response.json();
+        throw new Error(`Response status:${data.message}`);
+      } else {
+        const responseData = await response.json();
+        console.log("Login successful:", responseData);
+        alert("Login successful");
       }
     } catch (error) {
-      console.error("error in handle login", error.message);
+      console.error(error.message);
     }
   };
   return (
