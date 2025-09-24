@@ -3,20 +3,27 @@ const User = require("../Models/userModel");
 // const catchAsync = require("../utils/catchAsync");
 
 exports.SignUp = async (req, res, next) => {
+  const payload = req.body;
   try {
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password) {
+    
+    if (!payload.username || !payload.email || !payload.password) {
       return res
         .status(400)
         .json({ message: "Name, email, and password are required." });
     }
-    const newUser = await User.create({
-      name,
-      email,
-      password,
-      role: role || "user",
-      created_by: name,
-    });
+    const signUpData = {
+      ...payload,
+      name: payload.username,
+      role: payload.role || "user",
+      created_by: payload.username
+    }
+    const existingUser = await User.findOne({
+      where: {email: payload.email}
+    })
+    if (existingUser) {
+      return res.status(409).json({message: "This User already exists. please Login."})
+    }
+    const newUser = await User.create(signUpData);
     if (!newUser) {
       return res.status(500).json({ message: "Error creating user." });
     }
@@ -29,9 +36,9 @@ exports.SignUp = async (req, res, next) => {
 };
 
 exports.LogIn = async (req, res, next) => {
-  console.log("Login request body:", req.body);
+  
   try {
-    const { username, password } = req.body; // Adjusted to match frontend keys
+    const { username, password } = req.body;
     if(!username || !password) {
       return res.status(400).json({ message: "Username and password are required." });
     }
