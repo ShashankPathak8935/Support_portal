@@ -1,10 +1,10 @@
-import { Fragment } from "react";
+import React,{ Fragment } from "react";
 
 function Home() {
     
     return (
         <>
-            <h1>hello home</h1>
+            <h1>Welcome to the home page</h1>
         </>
     )
 }

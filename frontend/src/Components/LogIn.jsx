@@ -10,7 +10,6 @@ export default function LogIn() {
   // handle change
   const handleOnchange = (e) => {
     const { name, value } = e.target;
-    console.log("onchange event:", name, value);
     setUserData((prev) => ({
       ...prev,
       [name]: value,
@@ -33,12 +32,12 @@ export default function LogIn() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(`Response status:${data.message}`);
+        const errordata = await response.json();
+        throw new Error(`Response status:${errordata.message}`);
       } else {
         const responseData = await response.json();
-        console.log("Login successful:", responseData);
-        alert("Login successful");
+        console.log("Login successful:", responseData.message);
+        naviagte("/dashboard");
       }
     } catch (error) {
       console.error(error.message);
