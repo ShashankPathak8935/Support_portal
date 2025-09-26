@@ -1,6 +1,7 @@
 import React, { Fragment } from "react";
 import { signUpValidation } from "../validations/userValidation";
 import { useNavigate } from "react-router-dom";
+import { USER_API } from "../api/api";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function SignUp() {
   // handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = `${import.meta.env.VITE_SERVER_DEV_URL}/signup`;
+    const url = `${USER_API}/signup`;
     try {
       await signUpValidation.validate(signUpData, {
         abortEarly: false,
@@ -54,6 +55,8 @@ export default function SignUp() {
       } else {
         console.error("API Error", error);
       }
+    } finally {
+      console.error("finally block executed");
     }
   };
   return (
