@@ -2,14 +2,21 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const userRoutes = require("./Routes/userRoutes");
+const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 
 dotenv.config();
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.CLIENT_DEV_URLS.split(",");
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    // credentials: true, --> if cookie ya auth tokens ko header me bhejte hain to credential true krte hain
+  })
+);
 app.use(express.json());
-app.use('/', userRoutes);
-
+app.use(`${API_PREFIX}/users`, userRoutes);  // all users req from here
 
 // ✅ Global error handler
 app.use((err, req, res, next) => {
@@ -17,8 +24,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port:${PORT}`)
+  console.log(`Server is running on port:${PORT}`);
 });
