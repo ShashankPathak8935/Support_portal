@@ -35,6 +35,7 @@ export default function SignUp() {
         body: JSON.stringify({
           ...signUpData,
         }),
+        // credentials: "include", // include credentials in the request
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -42,6 +43,16 @@ export default function SignUp() {
       } else {
         const responseData = await response.json();
         console.log("signup message check", responseData.message);
+        // local storage--> token can be read from frontend
+        // localStorage.setItem("accessToken",responseData.data.accessToken);
+        // localStorage.setItem("refreshToken",responseData.data.refreshToken);
+        // localStorage.setItem("user", responseData.data.userData);
+        // session storage--> jaise hi tab close hoga token clear and ek hi tab me hote hain
+        // multiple tabs open krne par data share ni hota har tab alag hoti hai
+        // in both case token can be read from frontend--> risky
+        sessionStorage.setItem("accessToken",responseData.data.accessToken);
+        // sessionStorage.setItem("refreshToken",responseData.data.refreshToken);
+        // sessionStorage.setItem("user",JSON.stringify(responseData.data.userData));
         navigate("/home");
       }
     } catch (error) {
