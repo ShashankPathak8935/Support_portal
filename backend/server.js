@@ -8,11 +8,13 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = process.env.CLIENT_DEV_URLS.split(",");
+const cookieParser = require("cookie-parser");
+app.use(cookieParser(process.env.JWT_SECRET_KEY));
 app.use(
   cors({
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    // credentials: true, --> if cookie ya auth tokens ko header me bhejte hain to credential true krte hain
+    credentials: true, //--> if cookie ya auth tokens ko header me bhejte hain to credential true krte hain
   })
 );
 app.use(express.json());

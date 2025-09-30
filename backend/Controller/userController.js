@@ -1,4 +1,5 @@
 const { raw } = require("body-parser");
+const jwt = require("jsonwebtoken");
 const User = require("../Models/userModel");
 const { hashPasswordFn, comparePasswordFn } = require("../utils/helper/helper");
 const { signUpSchema } = require("../utils/validationSchema/validationSchema");
@@ -15,6 +16,7 @@ exports.SignUp = async (req, res, next) => {
         .status(400)
         .json({ message: "Name, email, and password are required." });
     }
+
     if (payload.password.length < 6) {
       return res
         .status(400)
@@ -42,7 +44,7 @@ exports.SignUp = async (req, res, next) => {
     if (!newUser) {
       return res.status(500).json({ message: "Error creating user." });
     }
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       {
         user_id: newUser.id,
         user_name: newUser.name,
@@ -50,11 +52,36 @@ exports.SignUp = async (req, res, next) => {
         user_role: newUser.role,
       },
       process.env.JWT_SECRET_KEY,
-      {expiresIn: "7d"}
+      { expiresIn: "15m" }
     );
-    res
-      .status(201)
-      .json({ message: "User created successfully", user: userData });
+
+    const refreshToken = jwt.sign(
+      {
+        user_id: newUser.id,
+        user_name: newUser.name,
+        user_email: newUser.email,
+        user_role: newUser.role,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, // https ke liye development me false
+      sameSite: "lax", // CSRF protection strict -->sameSite: 'strict' frontend and backend same site pr ho
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      signed: false,
+    });
+    console.log("cookie", res.cookie);
+    res.status(201).json({
+      status: "Success",
+      data: {
+        userData,
+        accessToken,
+      },
+      message: "User created successfully",
+    });
   } catch (error) {
     next(error);
   }
