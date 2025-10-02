@@ -42,6 +42,18 @@ const UserTable = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: true,
     },
+    original_file_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    unique_file_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    file_path: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
   },
   {
     tableName: "user",

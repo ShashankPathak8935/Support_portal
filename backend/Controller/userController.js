@@ -3,10 +3,13 @@ const jwt = require("jsonwebtoken");
 const User = require("../Models/userModel");
 const { hashPasswordFn, comparePasswordFn } = require("../utils/helper/helper");
 const { signUpSchema } = require("../utils/validationSchema/validationSchema");
+const fs = require("fs");
+const path = require("path");
 // const catchAsync = require("../utils/catchAsync");
 
 exports.SignUp = async (req, res, next) => {
   const payload = req.body;
+
   try {
     // Yup validation--> u can also use yup validation here
     // await signUpSchema.validate(payload, { abortEarly: false });
@@ -32,12 +35,28 @@ exports.SignUp = async (req, res, next) => {
     }
     const hashedPassword = await hashPasswordFn(payload.password);
 
+    let originalFileName = "";
+    let uniqueFileName = "";
+    let filePath = "";
+    if (payload.userImage) {
+      const base64Data = payload.userImage.split(";base64,").pop(); //extract , ke bad ka actual data
+      const imgBuffer = Buffer.from(base64Data, "base64"); // Create a buffer from the base64 string
+      const extension = payload.userImage.split(";")[0].split("/")[1]; // image/png
+      uniqueFileName = `userImage-${Date.now()}.${extension}`; // generate unique filename
+      originalFileName = `userImage.${extension}`;
+      filePath = path.join(__dirname, "../uploads", uniqueFileName);
+      fs.writeFileSync(filePath, imgBuffer); // Save the image to the server
+    }
+
     const signUpData = {
       ...payload,
       password: hashedPassword,
       name: payload.username,
       role: payload.role || "user",
       created_by: payload.username,
+      original_file_name: originalFileName,
+      unique_file_name: uniqueFileName,
+      file_path: filePath,
     };
     const newUser = await User.create(signUpData);
     const { password, ...userData } = newUser.toJSON(); // exclude password
@@ -73,7 +92,6 @@ exports.SignUp = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       signed: false,
     });
-    console.log("cookie", res.cookie);
     res.status(201).json({
       status: "Success",
       data: {
