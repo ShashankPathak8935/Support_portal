@@ -2,19 +2,35 @@ import React, { Fragment } from "react";
 import { signUpValidation } from "../validations/userValidation";
 import { useNavigate } from "react-router-dom";
 import { USER_API } from "../api/api";
+import { Link } from "react-router-dom";  
+import { convertToBase64} from "../helper/helper";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const [signUpData, setSignUpData] = React.useState({});
   const [errors, setErrors] = React.useState({});
+  const [showPreview, setShowPreview] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [file, setFile] = React.useState(null);
 
+  // handle change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSignUpData({
       ...signUpData,
       [name]: value,
     });
+  };
+
+  // handle file change
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFile(file);
+  }
+
+  // handle preview
+  const handlePreview = () => {
+    setShowPreview(true);
   };
 
   // handle submit
@@ -26,16 +42,22 @@ export default function SignUp() {
         abortEarly: false,
       });
       setIsSubmitting(true);
-
+      
+      let base64Image = "";
+      if (file) {
+        base64Image = await convertToBase64(file);
+      }
+      const payload = {
+        ...signUpData,
+        userImage: base64Image
+      }
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...signUpData,
-        }),
-        // credentials: "include", // include credentials in the request
+        body: JSON.stringify(payload),
+        credentials: "include", // include credentials in the request
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -44,13 +66,13 @@ export default function SignUp() {
         const responseData = await response.json();
         console.log("signup message check", responseData.message);
         // local storage--> token can be read from frontend
-        // localStorage.setItem("accessToken",responseData.data.accessToken);
+        localStorage.setItem("accessToken", responseData.data.accessToken);
         // localStorage.setItem("refreshToken",responseData.data.refreshToken);
         // localStorage.setItem("user", responseData.data.userData);
         // session storage--> jaise hi tab close hoga token clear and ek hi tab me hote hain
         // multiple tabs open krne par data share ni hota har tab alag hoti hai
         // in both case token can be read from frontend--> risky
-        sessionStorage.setItem("accessToken",responseData.data.accessToken);
+        sessionStorage.setItem("accessToken", responseData.data.accessToken);
         // sessionStorage.setItem("refreshToken",responseData.data.refreshToken);
         // sessionStorage.setItem("user",JSON.stringify(responseData.data.userData));
         navigate("/home");
@@ -68,6 +90,7 @@ export default function SignUp() {
       }
     } finally {
       console.error("finally block executed");
+      setIsSubmitting(false);
     }
   };
   return (
@@ -116,6 +139,31 @@ export default function SignUp() {
             <option value="User">User</option>
           </select>
           {errors.role && <p className="text-red-500">{errors.role}</p>}
+          <input
+            type="file"
+            name="userImage"
+            id="userImage"
+            placeholder="select profile image"
+            onChange={handleFileChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            type="button"
+            onClick={handlePreview}
+            className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          >
+            Preview Image
+          </button>
+          {showPreview && file && (
+            <div className="mt-4">
+              <p className="text-gray-600">Selected Image:</p>
+              <img
+                src={URL.createObjectURL(file)}
+                alt="Preview"
+                // className="mt-2 w-32 h-32 object-cover rounded-full border"
+              />
+            </div>
+          )}
           <button
             type="button"
             onClick={handleSubmit}
@@ -124,6 +172,11 @@ export default function SignUp() {
           >
             {isSubmitting ? "Submitting..." : "Sign Up"}
           </button>
+          <div>
+            <Link to="/" className="text-blue-500 hover:underline mt-4">
+              I have an account? Log In
+            </Link>
+          </div>
         </form>
       </div>
     </Fragment>
