@@ -14,8 +14,14 @@ export const signUpValidation = yup.object({
   role: yup.string().trim().required("role is required"),
 });
 
-
 export const logInValidation = yup.object({
-    email: yup.string().trim().required("Email is required"),
-    password: yup.string().trim().required("Password is required")
+  email: yup
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .required("email is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
 });

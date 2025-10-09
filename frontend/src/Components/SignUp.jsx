@@ -41,6 +41,7 @@ export default function SignUp() {
       await signUpValidation.validate(signUpData, {
         abortEarly: false,
       });
+      setErrors({});
       setIsSubmitting(true);
       
       let base64Image = "";
