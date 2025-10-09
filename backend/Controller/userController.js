@@ -44,7 +44,8 @@ exports.SignUp = async (req, res, next) => {
       const extension = payload.userImage.split(";")[0].split("/")[1]; // image/png
       uniqueFileName = `userImage-${Date.now()}.${extension}`; // generate unique filename
       originalFileName = `userImage.${extension}`;
-      filePath = path.join(__dirname, "../uploads", uniqueFileName);
+      // filePath = path.join(__dirname, "../uploads", uniqueFileName); // puri directory ka path
+      filePath = path.join("uploads", uniqueFileName); // relative path
       fs.writeFileSync(filePath, imgBuffer); // Save the image to the server
     }
 
@@ -107,21 +108,90 @@ exports.SignUp = async (req, res, next) => {
 
 exports.LogIn = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Username and password are required." });
     }
-    const user = await User.findOne({
-      where: { email: username },
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long." });
+    }
+    const existingUser = await User.findOne({
+      where: { email },
       raw: true,
-    }); // Assuming username is email
-    if (!user || user.password !== password) {
+    });
+
+    if (!existingUser) {
       return res.status(401).json({ message: "Invalid username or password." });
     }
-    res.status(200).json({ message: "Login successful", user });
+    const isPasswordValid = await comparePasswordFn(
+      password,
+      existingUser.password
+    );
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid username or password." });
+    }
+    // Generate tokens
+    const accessToken = jwt.sign(
+      {
+        user_id: existingUser.id,
+        user_name: existingUser.name,
+        user_email: existingUser.email,
+        user_role: existingUser.role,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "15m" }
+    );
+    const refreshToken = jwt.sign(
+      {
+        user_id: existingUser.id,
+        user_name: existingUser.name,
+        user_email: existingUser.email,
+        user_role: existingUser.role,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie for refresh token
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, // HTTPS ke liye true kar dena production me
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    res.status(200).json({
+      status: "Success",
+      message: "Login successfully",
+      data: {
+        accessToken,
+        userData: existingUser,
+      }
+    });
   } catch (error) {
+    console.error("Login error:", error);
     next(error);
   }
 };
+
+// logout
+exports.LogOut = async (req, res, next) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: false, // HTTPS ke liye true kar dena production me
+      sameSite: "lax",
+    });
+    res.status(200).json({
+      status: "Success",
+      message: "Logout successful"
+    });
+  } catch (error) {
+    next(error);    
+  }
+}
